@@ -23,7 +23,7 @@
     }
   },
   "hosting": {
-    "public": "nexora.web.app",
+    "public": ".",
     "ignore": [
       "firebase.json",
       "**/.*",

@@ -1,316 +1,351 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:image_picker/image_picker.dart';
-import 'firebase_options.dart';
 
-// --- CONFIGURATION ---
-const String adminEmail = "sandeshbhujel630@gmail.com";
+// --- प्रिमियम कलर थिम (Liga 1 Inspired) ---
+const Color kPrimary = Color(0xFF0D1B3E); // Deep Navy
+const Color kAccent = Color(0xFFC9A227);  // Gold
+const Color kBackground = Color(0xFF040B1D);
+const Color kSurface = Color(0xFF15264B);
+const Color kTextPrimary = Colors.white;
+const Color kTextSecondary = Colors.white70;
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const NexoraProApp());
-}
+void main() => runApp(NexoraUltraApp());
 
-class NexoraProApp extends StatelessWidget {
-  const NexoraProApp({super.key});
+class NexoraUltraApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      title: 'Nexora Liga Pro',
       theme: ThemeData.dark().copyWith(
-        primaryColor: Colors.orangeAccent,
-        scaffoldBackgroundColor: const Color(0xFF0F1216),
+        scaffoldBackgroundColor: kBackground,
+        primaryColor: kPrimary,
+        colorScheme: ColorScheme.fromSeed(seedColor: kAccent, secondary: kAccent),
       ),
-      home: const AuthWrapper(),
+      home: LoginScreen(),
     );
   }
 }
 
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
+// --- १. LOGIN SCREEN ---
+class LoginScreen extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return snapshot.data?.email == adminEmail ? const AdminPanel() : const UserHome();
-        }
-        return const LoginPage();
-      },
-    );
-  }
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-// --- 1. USER HOME ---
-class UserHome extends StatefulWidget {
-  const UserHome({super.key});
-  @override State<UserHome> createState() => _UserHomeState();
-}
-
-class _UserHomeState extends State<UserHome> {
-  int _selectedIndex = 0;
-  final List<Widget> _pages = [const NoticeBoard(), const DiamondStore(), const TournamentList(), const WalletPage()];
+class _LoginScreenState extends State<LoginScreen> {
+  bool _isObscured = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("NEXORA GAMING", style: TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
-        actions: [
-          // माथि + आइकनमा क्लिक गर्दा सिधै वालेट (QR) मा लैजाने
-          IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.greenAccent), onPressed: () => setState(() => _selectedIndex = 3)),
-          IconButton(onPressed: () => FirebaseAuth.instance.signOut(), icon: const Icon(Icons.logout)),
-        ],
-      ),
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.orangeAccent,
-        unselectedItemColor: Colors.grey,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notice'),
-          BottomNavigationBarItem(icon: Icon(Icons.diamond), label: 'Topup'),
-          BottomNavigationBarItem(icon: Icon(Icons.sports_esports), label: 'Matches'),
-          BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
-        ],
-      ),
-    );
-  }
-}
-
-// --- NOTICE BOARD ---
-class NoticeBoard extends StatelessWidget {
-  const NoticeBoard({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('notices').orderBy('time', descending: true).snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        return ListView.builder(
-          itemCount: snapshot.data!.docs.length,
-          itemBuilder: (context, index) {
-            var notice = snapshot.data!.docs[index];
-            return Card(
-              margin: const EdgeInsets.all(10),
-              child: Column(
+      body: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            colors: [kPrimary, kBackground],
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 30),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Logo
+              Container(
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: kSurface,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: kAccent, width: 3),
+                  boxShadow: [BoxShadow(color: kAccent.withOpacity(0.3), blurRadius: 20)],
+                ),
+                child: Icon(Icons.bolt, size: 80, color: kAccent),
+              ),
+              SizedBox(height: 30),
+              Text("NEXORA LIGA", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 2)),
+              Text("The Ultimate Gaming Arena", style: TextStyle(color: kAccent, fontSize: 14)),
+              SizedBox(height: 50),
+              _customField("Email Address", Icons.email_outlined),
+              SizedBox(height: 20),
+              _customField("Password", Icons.lock_outline, isPassword: true),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => _showDialog(context, "Password Recovery", "Instructions sent to your mail."),
+                  child: Text("Forgot Password?", style: TextStyle(color: kAccent)),
+                ),
+              ),
+              SizedBox(height: 30),
+              _actionButton("SIGN IN", () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => MainNavigation()));
+              }),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if (notice['imageUrl'] != "") Image.network(notice['imageUrl']),
-                  ListTile(title: Text(notice['title']), subtitle: Text(notice['body'])),
+                  Text("New here? "),
+                  GestureDetector(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => SignupScreen())),
+                    child: Text("Create Account", style: TextStyle(color: kAccent, fontWeight: FontWeight.bold)),
+                  ),
                 ],
               ),
-            );
-          },
-        );
-      },
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _customField(String hint, IconData icon, {bool isPassword = false}) {
+    return TextField(
+      obscureText: isPassword ? _isObscured : false,
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon, color: kAccent),
+        suffixIcon: isPassword ? IconButton(icon: Icon(Icons.visibility), onPressed: () => setState(() => _isObscured = !_isObscured)) : null,
+        filled: true,
+        fillColor: kSurface,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+      ),
     );
   }
 }
 
-// --- WALLET PAGE (QR & UPLOAD) ---
-class WalletPage extends StatefulWidget {
-  const WalletPage({super.key});
-  @override State<WalletPage> createState() => _WalletPageState();
+// --- २. SIGNUP SCREEN ---
+class SignupScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(30),
+        child: Column(
+          children: [
+            Text("Join the Arena", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+            SizedBox(height: 40),
+            _simpleField("Full Name", Icons.person),
+            SizedBox(height: 15),
+            _simpleField("Mobile Number", Icons.phone),
+            SizedBox(height: 15),
+            _simpleField("Email", Icons.email),
+            SizedBox(height: 15),
+            _simpleField("Password", Icons.lock, obscure: true),
+            SizedBox(height: 40),
+            _actionButton("REGISTER NOW", () => Navigator.pop(context)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _simpleField(String h, IconData i, {bool obscure = false}) {
+    return TextField(
+      obscureText: obscure,
+      decoration: InputDecoration(
+        hintText: h,
+        prefixIcon: Icon(i, color: kAccent),
+        filled: true,
+        fillColor: kSurface,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+      ),
+    );
+  }
 }
 
-class _WalletPageState extends State<WalletPage> {
-  File? _image;
-  final _amount = TextEditingController();
-  final _picker = ImagePicker();
+// --- ३. MAIN NAVIGATION (Dashboard + Profile + Wallet) ---
+class MainNavigation extends StatefulWidget {
+  @override
+  _MainNavigationState createState() => _MainNavigationState();
+}
 
-  Future _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) setState(() => _image = File(pickedFile.path));
-  }
+class _MainNavigationState extends State<MainNavigation> {
+  int _index = 0;
+  final List<Widget> _pages = [Dashboard(), WalletPage(), ProfilePage()];
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
+    return Scaffold(
+      body: _pages[_index],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _index,
+        onTap: (v) => setState(() => _index = v),
+        selectedItemColor: kAccent,
+        backgroundColor: kSurface,
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: "Wallet"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        ],
+      ),
+    );
+  }
+}
+
+// --- ४. DASHBOARD (PRO FEATURES) ---
+class Dashboard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("NEXORA ARENA"),
+        backgroundColor: kPrimary,
+        actions: [
+          IconButton(icon: Icon(Icons.admin_panel_settings, color: kAccent), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AdminPanel()))),
+        ],
+      ),
+      body: ListView(
+        padding: EdgeInsets.all(20),
         children: [
-          const Text("Scan QR to Pay", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          // यहाँ आफ्नो QR Code को लिङ्क हाल्नुहोस्
-          Image.network("https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=NexoraGamingPay", height: 200),
-          const SizedBox(height: 20),
-          GestureDetector(
-            onTap: _pickImage,
-            child: Container(
-              height: 150, width: double.infinity,
-              decoration: BoxDecoration(border: Border.all(color: Colors.orangeAccent), borderRadius: BorderRadius.circular(10)),
-              child: _image == null ? const Icon(Icons.add_a_photo, size: 50) : Image.file(_image!, fit: BoxFit.cover),
+          // Banner Slider
+          Container(
+            height: 180,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(colors: [kAccent, Colors.orange]),
             ),
+            child: Center(child: Text("LIVE TOURNAMENT: \$5000", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: kPrimary))),
           ),
-          const SizedBox(height: 15),
-          TextField(controller: _amount, decoration: const InputDecoration(labelText: "Enter Amount (Rs)", border: OutlineInputBorder())),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent, minimumSize: const Size(double.infinity, 50)),
-            onPressed: () {
-              // यहाँ Upload Logic थप्नुपर्छ
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Payment Sent for Approval!")));
-            },
-            child: const Text("SUBMIT PAYMENT", style: TextStyle(color: Colors.black)),
+          SizedBox(height: 30),
+          Text("Quick Actions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kAccent)),
+          SizedBox(height: 15),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _menuIcon(Icons.sports_esports, "Games"),
+              _menuIcon(Icons.emoji_events, "Results"),
+              _menuIcon(Icons.group, "Teams"),
+              _menuIcon(Icons.support_agent, "Support"),
+            ],
+          ),
+          SizedBox(height: 30),
+          Text("Active Matches", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          _matchCard("PUBG Mobile", "10:30 PM", "Entry: \$10"),
+          _matchCard("Free Fire", "11:00 PM", "Entry: Free"),
+        ],
+      ),
+    );
+  }
+
+  Widget _menuIcon(IconData i, String l) {
+    return Column(children: [CircleAvatar(backgroundColor: kSurface, child: Icon(i, color: kAccent)), SizedBox(height: 5), Text(l, style: TextStyle(fontSize: 12))]);
+  }
+
+  Widget _matchCard(String title, String time, String price) {
+    return Card(
+      color: kSurface,
+      margin: EdgeInsets.only(top: 15),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: ListTile(
+        leading: Icon(Icons.videogame_asset, color: kAccent),
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(time),
+        trailing: ElevatedButton(onPressed: () {}, child: Text(price)),
+      ),
+    );
+  }
+}
+
+// --- ५. WALLET PAGE ---
+class WalletPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("My Wallet"), backgroundColor: kPrimary),
+      body: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(40),
+            width: double.infinity,
+            color: kSurface,
+            child: Column(children: [
+              Text("Total Balance", style: TextStyle(color: kAccent)),
+              Text("\$2,450.00", style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+            ]),
+          ),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.all(20),
+              children: [
+                _historyTile("Deposit via QR", "+\$500", Colors.green),
+                _historyTile("Tournament Entry", "-\$20", Colors.red),
+              ],
+            ),
           )
         ],
       ),
     );
   }
-}
 
-// --- TOURNAMENT LIST ---
-class TournamentList extends StatelessWidget {
-  const TournamentList({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('tournaments').snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        return ListView.builder(
-          itemCount: snapshot.data!.docs.length,
-          itemBuilder: (context, index) {
-            var match = snapshot.data!.docs[index];
-            return Card(
-              child: ListTile(
-                title: Text(match['title']),
-                subtitle: Text("Prize: Rs ${match['prize']} | Entry: Rs ${match['entry']}"),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () => _showMatchDetails(context, match),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showMatchDetails(BuildContext context, DocumentSnapshot match) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(match['title'], style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const Divider(),
-            const Text("Rewards (Position 1-20):", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(match['rewards']), // Admin ले टाइप गरेको Reward List यहाँ देखिन्छ
-            const Spacer(),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-              onPressed: () => Navigator.pop(context),
-              child: const Text("JOIN NOW"),
-            )
-          ],
-        ),
-      ),
-    );
+  Widget _historyTile(String t, String amt, Color c) {
+    return ListTile(title: Text(t), trailing: Text(amt, style: TextStyle(color: c, fontWeight: FontWeight.bold)));
   }
 }
 
-// --- 2. ADMIN PANEL ---
-class AdminPanel extends StatefulWidget {
-  const AdminPanel({super.key});
-  @override State<AdminPanel> createState() => _AdminPanelState();
-}
-
-class _AdminPanelState extends State<AdminPanel> {
-  int _tab = 0;
+// --- ६. ADMIN PANEL (ULTIMATE CONTROL) ---
+class AdminPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("ADMIN DASHBOARD"), backgroundColor: Colors.red),
-      body: _tab == 0 ? const AdminMatches() : const AdminPayments(),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _tab,
-        onTap: (i) => setState(() => _tab = i),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.gamepad), label: 'Matches'),
-          BottomNavigationBarItem(icon: Icon(Icons.attach_money), label: 'Payments'),
-        ],
-      ),
-    );
-  }
-}
-
-// Admin Matches Form
-class AdminMatches extends StatelessWidget {
-  const AdminMatches({super.key});
-  @override
-  Widget build(BuildContext context) {
-    final title = TextEditingController();
-    final rewards = TextEditingController(); // १ देखि २० सम्मको रिवार्ड यहाँ लेख्ने
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
+      appBar: AppBar(title: Text("Admin Control Center"), backgroundColor: Colors.redAccent),
+      body: GridView.count(
+        crossAxisCount: 2,
+        padding: EdgeInsets.all(20),
+        crossAxisSpacing: 15,
+        mainAxisSpacing: 15,
         children: [
-          TextField(controller: title, decoration: const InputDecoration(labelText: "Match Title")),
-          TextField(controller: rewards, maxLines: 5, decoration: const InputDecoration(labelText: "Rewards (e.g. 1st: 500, 2nd: 300...)")),
-          const SizedBox(height: 20),
-          ElevatedButton(onPressed: () {
-            FirebaseFirestore.instance.collection('tournaments').add({
-              'title': title.text, 'rewards': rewards.text, 'prize': '1000', 'entry': '50',
-            });
-          }, child: const Text("Add Tournament"))
+          _adminCard(Icons.qr_code_2, "Update QR", () => _showDialog(context, "Admin", "QR Uploading...")),
+          _adminCard(Icons.notifications_active, "Broadcast", () {}),
+          _adminCard(Icons.manage_accounts, "User List", () {}),
+          _adminCard(Icons.monetization_on, "Payouts", () {}),
+          _adminCard(Icons.settings, "App Config", () {}),
+          _adminCard(Icons.analytics, "Statistics", () {}),
         ],
       ),
     );
   }
-}
 
-// Admin Payments View
-class AdminPayments extends StatelessWidget {
-  const AdminPayments({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text("Pending Payment Requests will appear here"));
-  }
-}
-
-// --- LOGIN PAGE ---
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    final email = TextEditingController();
-    final pass = TextEditingController();
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text("NEXORA", style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 30),
-            TextField(controller: email, decoration: const InputDecoration(labelText: "Email")),
-            TextField(controller: pass, obscureText: true, decoration: const InputDecoration(labelText: "Password")),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => FirebaseAuth.instance.signInWithEmailAndPassword(email: email.text, password: pass.text),
-              child: const Text("LOGIN"),
-            ),
-          ],
-        ),
+  Widget _adminCard(IconData i, String l, VoidCallback t) {
+    return InkWell(
+      onTap: t,
+      child: Container(
+        decoration: BoxDecoration(color: kSurface, borderRadius: BorderRadius.circular(20)),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(i, size: 40, color: kAccent), SizedBox(height: 10), Text(l)]),
       ),
     );
   }
 }
 
-// नोट: DiamondStore पहिलेकै जस्तै छ, माथि ठाउँ अभावले यहाँ थपिएन।
-class DiamondStore extends StatelessWidget {
-  const DiamondStore({super.key});
+class ProfilePage extends StatelessWidget {
   @override
-  Widget build(BuildContext context) { return const Center(child: Text("Diamond Store")); }
+  Widget build(BuildContext context) {
+    return Center(child: Text("User Profile & Settings"));
+  }
 }
 
+void _showDialog(BuildContext context, String t, String m) {
+  showDialog(
+    context: context,
+    builder: (c) => AlertDialog(
+      backgroundColor: kSurface,
+      title: Text(t, style: TextStyle(color: kAccent)),
+      content: Text(m),
+      actions: [TextButton(onPressed: () => Navigator.pop(c), child: Text("OK"))],
+    ),
+  );
+}
+
+Widget _actionButton(String label, VoidCallback action) {
+  return ElevatedButton(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: kAccent,
+      minimumSize: Size(double.infinity, 55),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 10,
+    ),
+    onPressed: action,
+    child: Text(label, style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
+  );
+}
 
