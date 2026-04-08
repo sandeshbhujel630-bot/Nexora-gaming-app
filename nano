@@ -1,0 +1,203 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(SandeshGamingApp());
+}
+
+const String ADMIN_EMAIL = "sandeshbhujel630@gmail.com";
+
+class SandeshGamingApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: "Sandesh Gaming",
+      theme: ThemeData.dark(),
+      home: LoginScreen(),
+    );
+  }
+}
+
+// ================= LOGIN =================
+
+class LoginScreen extends StatelessWidget {
+  final email = TextEditingController();
+  final pass = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Sandesh Gaming Login")),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(controller: email, decoration: InputDecoration(labelText: "Email")),
+            TextField(controller: pass, decoration: InputDecoration(labelText: "Password")),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => HomeScreen(userEmail: email.text),
+                  ),
+                );
+              },
+              child: Text("Login"),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ================= HOME =================
+
+class HomeScreen extends StatefulWidget {
+  final String userEmail;
+
+  HomeScreen({required this.userEmail});
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int wallet = 500;
+
+  List<Map<String, dynamic>> tournaments = [
+    {"name": "BR Squad", "fee": 50, "prize": 1000},
+    {"name": "CS Duo", "fee": 30, "prize": 500},
+  ];
+
+  void joinTournament(int fee) {
+    if (wallet >= fee) {
+      setState(() {
+        wallet -= fee;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Joined! Rs $fee deducted")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Not enough balance")),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    bool isAdmin = widget.userEmail == ADMIN_EMAIL;
+
+    return Scaffold(
+      appBar: AppBar(title: Text("Sandesh Gaming")),
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            DrawerHeader(
+              child: Column(
+                children: [
+                  Text("Welcome"),
+                  Text(widget.userEmail),
+                  SizedBox(height: 10),
+                  Text("Wallet: Rs $wallet"),
+                ],
+              ),
+            ),
+            ListTile(
+              title: Text("Leaderboard"),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => LeaderboardScreen()),
+              ),
+            ),
+            if (isAdmin)
+              ListTile(
+                title: Text("Admin Panel"),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => AdminScreen()),
+                ),
+              ),
+          ],
+        ),
+      ),
+      body: ListView.builder(
+        itemCount: tournaments.length,
+        itemBuilder: (context, index) {
+          var t = tournaments[index];
+          return Card(
+            child: ListTile(
+              title: Text(t["name"]),
+              subtitle: Text("Entry: Rs ${t["fee"]} | Prize: Rs ${t["prize"]}"),
+              trailing: ElevatedButton(
+                child: Text("Join"),
+                onPressed: () => joinTournament(t["fee"]),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ================= LEADERBOARD =================
+
+class LeaderboardScreen extends StatelessWidget {
+  final List players = [
+    {"name": "Player1", "points": 50},
+    {"name": "Player2", "points": 40},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Leaderboard")),
+      body: ListView(
+        children: players.map((p) {
+          return ListTile(
+            title: Text(p["name"]),
+            trailing: Text("${p["points"]} pts"),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ================= ADMIN =================
+
+class AdminScreen extends StatelessWidget {
+  final roomId = TextEditingController();
+  final pass = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Admin Panel")),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Text("Release Room", style: TextStyle(fontSize: 18)),
+            TextField(controller: roomId, decoration: InputDecoration(labelText: "Room ID")),
+            TextField(controller: pass, decoration: InputDecoration(labelText: "Password")),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Room Released: ${roomId.text}")),
+                );
+              },
+              child: Text("Release"),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
