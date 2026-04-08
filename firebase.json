@@ -1,1 +1,33 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"nexora-e87b0","appId":"1:473855612979:android:811256366eca2a51616b46","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"nexora-e87b0","configurations":{"android":"1:473855612979:android:811256366eca2a51616b46","ios":"1:473855612979:ios:ec374a6219865fa5616b46","macos":"1:473855612979:ios:ec374a6219865fa5616b46","web":"1:473855612979:web:6192de70f98778ec616b46","windows":"1:473855612979:web:099d9c8aaa287f69616b46"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "nexora-e87b0",
+          "appId": "1:473855612979:android:811256366eca2a51616b46",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "nexora-e87b0",
+          "configurations": {
+            "android": "1:473855612979:android:811256366eca2a51616b46",
+            "ios": "1:473855612979:ios:ec374a6219865fa5616b46",
+            "macos": "1:473855612979:ios:ec374a6219865fa5616b46",
+            "web": "1:473855612979:web:6192de70f98778ec616b46",
+            "windows": "1:473855612979:web:099d9c8aaa287f69616b46"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "nexora.web.app",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}
